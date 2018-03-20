@@ -259,7 +259,7 @@
 							<label>
 								<xsl:value-of select="php:function('lang', 'responsible unit')"/>
 							</label>
-							<select name="values[responsible_unit]" class="pure-input-1-2" >
+							<select name="values[responsible_unit]" class="pure-input-1-4" >
 								<xsl:attribute name="title">
 									<xsl:value-of select="php:function('lang', 'Set responsible unit')"/>
 								</xsl:attribute>
@@ -273,7 +273,7 @@
 							<label>
 								<xsl:value-of select="php:function('lang', 'request status')"/>
 							</label>
-							<select name="values[status]" class="pure-input-1-2" >
+							<select name="values[status]" class="pure-input-1-4" >
 								<xsl:attribute name="title">
 									<xsl:value-of select="php:function('lang', 'Set the status of the request')"/>
 								</xsl:attribute>
@@ -344,7 +344,7 @@
 						<label>
 							<xsl:value-of select="php:function('lang', 'building part')"/>
 						</label>
-						<select data-validation="required" name="values[building_part]" class="pure-input-1-2" >
+						<select data-validation="required" name="values[building_part]" class="pure-input-1-4" >
 							<xsl:attribute name="title">
 								<xsl:value-of select="php:function('lang', 'select building part')"/>
 							</xsl:attribute>
@@ -405,7 +405,7 @@
 									<label>
 										<xsl:value-of select="php:function('lang', 'Authorities Demands')"/>
 									</label>
-									<select name="values[authorities_demands]" class="pure-input-1-2" >
+									<select name="values[authorities_demands]" class="pure-input-1-4" >
 										<xsl:attribute name="title">
 											<xsl:value-of select="php:function('lang', 'Is there a demand from the authorities to correct this condition?')"/>
 											<xsl:text> + </xsl:text>
@@ -712,7 +712,7 @@
 			</xsl:attribute>
 			<xsl:value-of select="php:function('lang', 'condition degree')"/>
 		</label>
-		<select name="values[condition][{condition_type}][degree]"  class="pure-input-1-2" >
+		<select name="values[condition][{condition_type}][degree]"  class="pure-input-1-4" >
 			<xsl:attribute name="title">
 				<xsl:value-of select="php:function('lang', 'select value')"/>
 			</xsl:attribute>
@@ -728,7 +728,7 @@
 					</xsl:attribute>
 					<xsl:value-of select="php:function('lang', 'consequence type')"/>
 				</label>
-				<select name="values[condition][{condition_type}][condition_type]"  class="pure-input-1-2" >
+				<select name="values[condition][{condition_type}][condition_type]"  class="pure-input-1-4" >
 					<xsl:attribute name="title">
 						<xsl:value-of select="php:function('lang', 'select value')"/>
 					</xsl:attribute>
@@ -744,7 +744,7 @@
 			</xsl:attribute>
 			<xsl:value-of select="php:function('lang', 'Consequence')"/>
 		</label>
-		<select name="values[condition][{condition_type}][consequence]" class="pure-input-1-2" >
+		<select name="values[condition][{condition_type}][consequence]" class="pure-input-1-4" >
 			<xsl:attribute name="title">
 				<xsl:value-of select="php:function('lang', 'select value')"/>
 			</xsl:attribute>
@@ -758,7 +758,7 @@
 			</xsl:attribute>
 			<xsl:value-of select="php:function('lang', 'Probability')"/>
 		</label>
-		<select name="values[condition][{condition_type}][probability]" class="pure-input-1-2" >
+		<select name="values[condition][{condition_type}][probability]" class="pure-input-1-4" >
 			<xsl:attribute name="title">
 				<xsl:value-of select="php:function('lang', 'select value')"/>
 			</xsl:attribute>

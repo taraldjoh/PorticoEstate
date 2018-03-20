@@ -197,7 +197,7 @@
 						<label for="name">
 							<xsl:value-of select="php:function('lang', 'project type')"/>
 						</label>
-						<select name="values[project_type_id]" class="pure-input-1-2">
+						<select name="values[project_type_id]" class="pure-input-1-4">
 							<xsl:attribute name="title">
 								<xsl:value-of select="php:function('lang', 'project type')"/>
 							</xsl:attribute>
@@ -827,7 +827,7 @@
 								<xsl:variable name="lang_branch_statustext">
 									<xsl:value-of select="lang_branch_statustext"/>
 								</xsl:variable>
-								<select name="values[branch][]" multiple="multiple" title="{$lang_branch_statustext}" class="pure-input-1-2">
+								<select name="values[branch][]" multiple="multiple" title="{$lang_branch_statustext}" class="pure-input-1-4">
 									<xsl:apply-templates select="branch_list"/>
 								</select>
 							</div>
@@ -848,7 +848,7 @@
 								<xsl:variable name="lang_key_fetch_statustext">
 									<xsl:value-of select="lang_key_fetch_statustext"/>
 								</xsl:variable>
-								<select name="values[key_fetch]" title="{$lang_key_fetch_statustext}" class="pure-input-1-2">
+								<select name="values[key_fetch]" title="{$lang_key_fetch_statustext}" class="pure-input-1-4">
 									<option value="">
 										<xsl:value-of select="lang_no_key_fetch"/>
 									</option>
@@ -862,7 +862,7 @@
 								<xsl:variable name="lang_key_deliver_statustext">
 									<xsl:value-of select="lang_key_deliver_statustext"/>
 								</xsl:variable>
-								<select name="values[key_deliver]" class="pure-input-1-2">
+								<select name="values[key_deliver]" class="pure-input-1-4">
 									<option value="">
 										<xsl:value-of select="lang_no_key_deliver"/>
 									</option>
@@ -876,7 +876,7 @@
 								<xsl:variable name="lang_key_responsible_statustext">
 									<xsl:value-of select="lang_key_responsible_statustext"/>
 								</xsl:variable>
-								<select name="values[key_responsible]" class="pure-input-1-2">
+								<select name="values[key_responsible]" class="pure-input-1-4">
 									<option value="">
 										<xsl:value-of select="lang_no_key_responsible"/>
 									</option>

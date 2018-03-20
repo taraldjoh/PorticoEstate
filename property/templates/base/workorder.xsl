@@ -334,7 +334,7 @@
 						<label for="name">
 							<xsl:value-of select="php:function('lang', 'janitor')"/>
 						</label>
-						<select name="values[user_id]" class="pure-input-1-2">
+						<select name="values[user_id]" class="pure-input-1-4">
 							<xsl:attribute name="title">
 								<xsl:value-of select="php:function('lang', 'janitor')"/>
 							</xsl:attribute>
@@ -594,7 +594,7 @@
 						<label>
 							<xsl:value-of select="php:function('lang', 'contract')"/>
 						</label>
-						<select id="vendor_contract_id" name="values[contract_id]" class="pure-input-1-2">
+						<select id="vendor_contract_id" name="values[contract_id]" class="pure-input-1-4">
 							<xsl:choose>
 								<xsl:when test="mode='edit'">
 									<xsl:if test="count(contract_list/options) &gt; 0">
@@ -725,7 +725,7 @@
 						</label>
 						<xsl:choose>
 							<xsl:when test="b_account_as_listbox = 1">
-								<select name="values[b_account_id]" class="pure-input-1-2">
+								<select name="values[b_account_id]" class="pure-input-1-4">
 									<xsl:attribute name="title">
 										<xsl:value-of select="$lang_budget_account"/>
 									</xsl:attribute>
@@ -808,7 +808,7 @@
 								<label>
 									<xsl:value-of select="$lang_building_part"/>
 								</label>
-								<select name="values[building_part]" class="pure-input-1-2">
+								<select name="values[building_part]" class="pure-input-1-4">
 									<xsl:attribute name="title">
 										<xsl:value-of select="$lang_building_part"/>
 									</xsl:attribute>
@@ -1238,7 +1238,7 @@
 								<xsl:variable name="lang_key_deliver_statustext">
 									<xsl:value-of select="lang_key_deliver_statustext"/>
 								</xsl:variable>
-								<select name="values[key_deliver]" class="pure-input-1-2">
+								<select name="values[key_deliver]" class="pure-input-1-4">
 									<option value="">
 										<xsl:value-of select="lang_no_key_deliver"/>
 									</option>

@@ -1638,7 +1638,7 @@ HTML;
 
 
 
-			$cat_select = $this->cats->formatted_xslt_list(array('select_name' => 'values[cat_id]',	'use_acl' => $this->_category_acl, 'required' => true, 'class' => 'pure-input-1-2'));
+			$cat_select = $this->cats->formatted_xslt_list(array('select_name' => 'values[cat_id]',	'use_acl' => $this->_category_acl, 'required' => true, 'class' => 'pure-input-1-4'));
 
 			$_cat_list = array();
 			if($this->simple && isset($fmttssimple_categories) && $fmttssimple_categories[1])
@@ -2889,7 +2889,7 @@ HTML;
 //_debug_array($supervisor_email);die();
 			$msgbox_data = $this->bocommon->msgbox_data($receipt);
 			$cat_select = $this->cats->formatted_xslt_list(array('select_name' => 'values[cat_id]',
-				'selected' => $this->cat_id, 'use_acl' => $this->_category_acl, 'required' => true, 'class' => 'pure-input-1-2'));
+				'selected' => $this->cat_id, 'use_acl' => $this->_category_acl, 'required' => true, 'class' => 'pure-input-1-4'));
 
 			$_ticket_cat_found = false;
 			if (isset($cat_select['cat_list']) && is_array($cat_select['cat_list']))

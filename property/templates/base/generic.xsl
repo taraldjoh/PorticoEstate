@@ -218,7 +218,7 @@
 										</xsl:choose>
 									</xsl:when>
 									<xsl:when test="type='select'">
-										<select id="{name}" name="values[{name}]" class="pure-input-1-2" >
+										<select id="{name}" name="values[{name}]" class="pure-input-1-4" >
 											<xsl:choose>
 												<xsl:when test="nullable!='1' or required=1">
 													<xsl:attribute name="data-validation">
@@ -240,7 +240,7 @@
 										</select>
 									</xsl:when>
 									<xsl:when test="type='multiple_select'">
-										<select id="{name}" name="values[{name}][]" multiple="multiple" class="pure-input-1-2" >
+										<select id="{name}" name="values[{name}][]" multiple="multiple" class="pure-input-1-4" >
 											<xsl:choose>
 												<xsl:when test="nullable!='1' or required=1">
 													<xsl:attribute name="data-validation">
