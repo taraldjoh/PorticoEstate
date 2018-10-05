@@ -77,6 +77,7 @@
 	class hent_epost_fra_eksterne_BK extends property_cron_parent
 	{
 
+		var $items_to_move = array();
 		protected $config;
 
 		public function __construct()
@@ -125,8 +126,8 @@
 		function process_messages()
 		{
 			// Set connection information.
-			$host = 'epost.bergen.kommune.no';
-			$username = 'xPortico';
+			$host = !empty($this->config->config_data['xPortico']['ews_server']) ? $this->config->config_data['xPortico']['ews_server'] : 'epost.bergen.kommune.no';
+			$username = !empty($this->config->config_data['xPortico']['username']) ? $this->config->config_data['xPortico']['username'] : 'xPortico';
 			$password = $this->config->config_data['xPortico']['password'];
 			$version = Client::VERSION_2016;
 
@@ -237,6 +238,14 @@
 						{
 							$this->add_attacthment_to_target($target, $saved_attachments);
 						}
+
+						foreach ($this->items_to_move as $item4)
+						{
+							$this->update_message($client, $item4);
+							$this->move_message($client, $item4, $folder_info);
+						}
+
+						$this->items_to_move = array();
 					}
 				}
 			}
@@ -319,8 +328,6 @@
 					$this->receipt['message'][] = array('msg' => "Melding #{$ticket_id} er opprettet");
 					$target['type'] = 'fmticket';
 					$target['id'] = $ticket_id;
-					$this->update_message($client, $item3);
-					$this->move_message($client, $item3, $folder_info);
 				}
 			}
 			else if(preg_match("/^Kvittering status:/" , $subject ))
@@ -332,8 +339,6 @@
 					$target['type'] = 'workorder';
 					$target['id'] = $order_id;
 					$this->receipt['message'][] = array('msg' => "Status for ordre #{$order_id} er oppdatert");
-					$this->update_message($client, $item3);
-					$this->move_message($client, $item3, $folder_info);
 				}
 			}
 			else if(preg_match("/^ISS vedlegg:/" , $subject ))
@@ -346,10 +351,64 @@
 					$target['id'] = $ticket_id;
 				}
 			}
+			else if(preg_match("/\[PorticoTicket/" , $subject ))
+			{
+				preg_match_all("/\[[^\]]*\]/", $subject, $matches);
+				$identificator_str =  trim($matches[0][0],  "[]" );
+				$identificator_arr = explode("::", $identificator_str);
 
+				$sender = $item3->Sender->Mailbox->EmailAddress;
+				$ticket_id = $this->update_external_communication($identificator_arr, $body, $sender);
+
+				if($ticket_id)
+				{
+					$target['type'] = 'fmticket';
+					$target['id'] = $ticket_id;
+				}
+			}
+
+			/**
+			 * Ticket created / updated
+			 */
+			if($target)
+			{
+				$this->items_to_move[] = $item3;
+
+			}
 			return $target;
 
 		}
+
+		function update_external_communication($identificator_arr, $body, $sender)
+		{
+			$ticket_id = (int)$identificator_arr[1];
+			$msg_id	= (int)$identificator_arr[2];
+
+			if(!$msg_id)
+			{
+				return false;
+			}
+			$soexternal = createObject('property.soexternal_communication');
+
+			$message_arr = explode('========', $body);
+			$message = $message_arr[0];
+			if($soexternal->add_msg($msg_id, $message, $sender))
+			{
+				$sql = "SELECT assignedto"
+					. " FROM fm_tts_tickets"
+					. " WHERE id = {$ticket_id}";
+				$this->db->query($sql, __LINE__, __FILE__);
+				$this->db->next_record();
+				$assignedto = $this->db->f('assignedto');
+				if($assignedto)
+				{
+					createObject('property.boexternal_communication')->alert_assigned($msg_id);
+				}
+
+				return $ticket_id;
+			}	
+		}
+
 		function get_ticket ($subject)
 		{
 			//ISS vedlegg: vedlegg til #ID: <din WO ID>
@@ -368,7 +427,7 @@
 		function set_order_status ($subject, $body, $from)
 		{
 			$order_arr = explode(':', $subject);
-			$order_id = trim($order_arr[1]);
+			$order_id = (int)trim($order_arr[1]);
 
 			$text = trim($body);
 			$textAr = explode(PHP_EOL, $text);
@@ -515,6 +574,8 @@
 
 		function create_ticket ($subject, $body)
 		{
+			$ticket_id = $this->get_ticket($subject);
+
 			$subject_arr = explode('#', $subject);
 			$id_arr = explode(':', $subject_arr[1]);
 			$external_ticket_id = trim($id_arr[1]);
@@ -547,19 +608,28 @@
 			}
 			$message_details = implode(PHP_EOL, $message_details_arr);
 
-			$priority = 1;
-			$message_cat_id = 10006; // IK eksterne
-			$ticket = array
-			(
-				'location_code' => $location_code,
-				'cat_id' => $message_cat_id,
-				'priority' => $priority, //valgfri (1-3)
-				'title' => $message_title,
-				'details' => $message_details,
-				'external_ticket_id'	=> $external_ticket_id
-			);
+			if($ticket_id)
+			{
+				$historylog = CreateObject('property.historylog', 'tts');
+				$historylog->add('C', $ticket_id, $message_details);
+			}
+			else
+			{
+				$priority = 3;
+				$message_cat_id = 10006; // IK eksterne
+				$ticket = array
+				(
+					'location_code' => $location_code,
+					'cat_id' => $message_cat_id,
+					'priority' => $priority, //valgfri (1-3)
+					'title' => $message_title,
+					'details' => $message_details,
+					'external_ticket_id'	=> $external_ticket_id
+				);
 
-			return CreateObject('property.botts')->add_ticket($ticket);
+				$ticket_id =  CreateObject('property.botts')->add_ticket($ticket);
+			}
+			return $ticket_id;
 		}
 
 		function add_attacthment_to_target( $target, $saved_attachments )
