@@ -567,6 +567,12 @@
 							'url' => $GLOBALS['phpgw']->link('/index.php', array('menuaction' => 'property.uigeneric.index',
 								'type' => 'location_contact'))
 						);
+					$admin_children_location['cadastre'] = array
+							(
+							'text' => lang('cadastre'),
+							'url' => $GLOBALS['phpgw']->link('/index.php', array('menuaction' => 'admin.ui_custom.list_attribute',
+							'appname' => 'property', 'location' => '.location.gab', 'menu_selection' => 'admin::property::location::cadastre'))
+						);
 					$admin_children_location['location_exception'] = array
 							(
 							'text' => lang('location exception'),
@@ -1150,9 +1156,10 @@
 				);
 			}
 
+			$invoicehandler = isset($config['invoicehandler']) && $config['invoicehandler'] == 2 ? 'uiinvoice2' : 'uiinvoice';
+
 			if ($acl->check('.invoice', PHPGW_ACL_READ, 'property'))
 			{
-				$invoicehandler = isset($config['invoicehandler']) && $config['invoicehandler'] == 2 ? 'uiinvoice2' : 'uiinvoice';
 				$children = array();
 				$children_invoice = array();
 				if ($acl->check('.invoice', PHPGW_ACL_PRIVATE, 'property'))
