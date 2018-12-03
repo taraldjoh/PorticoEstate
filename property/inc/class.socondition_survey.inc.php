@@ -49,6 +49,8 @@
 			$sort = isset($data['sort']) ? $data['sort'] : '';
 			$dir = isset($data['dir']) ? $data['dir'] : 'DESC';
 			$cat_id = isset($data['cat_id']) ? (int)$data['cat_id'] : 0;
+			$status_id = isset($data['status_id']) ? (int)$data['status_id'] : 0;
+			$status_open = empty($data['status_open']) ? false : true;
 			$allrows = isset($data['allrows']) ? $data['allrows'] : '';
 			$results = isset($data['results']) ? (int)$data['results'] : 0;
 
@@ -82,15 +84,29 @@
 				$where = 'AND';
 			}
 
+			if ($status_id)
+			{
+				$filtermethod .= " {$where} {$table}.status_id = {$status_id}";
+				$where = 'AND';
+			}
+
+			if($status_open)
+			{
+				$filtermethod .= " {$where} {$table}_status.closed IS NULL";
+				$where = 'AND';
+
+			}
 			if ($query)
 			{
 				$query = $this->_db->db_addslashes($query);
 				$querymethod = " {$where} {$table}.title {$this->_like} '%{$query}%' OR {$table}.address {$this->_like} '%{$query}%'";
 			}
 
-			$groupmethod = "GROUP BY $table.id, $table.title, $table.descr, $table.address, $table.entry_date, $table.user_id, org_name, $table.multiplier";
+			$groupmethod = "GROUP BY {$table}_status.descr, $table.id, $table.title, $table.descr, $table.address, $table.entry_date, $table.user_id, org_name, $table.multiplier, {$table}_status.closed";
 			$sql = "SELECT DISTINCT $table.id, $table.title, $table.descr, $table.address, $table.entry_date, $table.user_id, $table.multiplier,"
-				. " count(condition_survey_id) AS cnt, org_name as vendor FROM {$table} "
+				. " COUNT(condition_survey_id) AS cnt, org_name AS vendor, {$table}_status.descr AS status, {$table}_status.closed"
+				. " FROM {$table} "
+				. " {$this->_left_join} {$table}_status ON {$table}_status.id = {$table}.status_id"
 				. " {$this->_left_join} fm_vendor ON {$table}.vendor_id = fm_vendor.id"
 				. " {$this->_left_join} fm_request ON {$table}.id =fm_request.condition_survey_id {$filtermethod} {$querymethod} {$groupmethod}";
 
@@ -121,8 +137,22 @@
 					'user' => $this->_db->f('user_id'),
 					'multiplier' => $this->_db->f('multiplier'),
 					'cnt' => $this->_db->f('cnt'),
+					'status' => $this->_db->f('status', true),
+					'closed' => $this->_db->f('closed'),
 				);
 			}
+
+			foreach ($values as &$entry)
+			{
+				$summation = $this->get_summation($entry['id']);
+
+				$entry['summation'] = 0;
+				foreach ($summation as $sum)
+				{
+					$entry['summation'] += $sum['amount'] * $entry['multiplier'];
+				}
+			}
+
 
 			return $values;
 		}
@@ -294,6 +324,37 @@
 			return $id;
 		}
 
+		public function edit_multiplier( $data )
+		{
+			$id = (int)$data['id'];
+
+			$value_set = array
+			(
+				'multiplier' => $data['multiplier']
+			);
+
+			$this->_db->transaction_begin();
+
+			try
+			{
+				$this->_edit($id, $value_set, 'fm_condition_survey');
+				$this->_db->query("UPDATE fm_request SET multiplier = '{$data['multiplier']}' WHERE condition_survey_id = {$id}", __LINE__, __FILE__);
+			}
+			catch (Exception $e)
+			{
+				if ($e)
+				{
+					$this->_db->transaction_abort();
+					throw $e;
+				}
+			}
+
+			$this->_db->transaction_commit();
+
+			return $id;
+		}
+
+
 		public function import( $survey, $import_data = array() )
 		{
 			if (!isset($survey['id']) || !$survey['id'])
@@ -460,7 +521,7 @@
 					$request['location_code'] = $survey['location_code'];
 					$request['origin_id'] = $origin_id;
 					$request['origin_item_id'] = (int)$survey['id'];
-					$request['title'] = substr($entry['title'], 0, 255);
+					$request['title'] = $entry['title'];
 					$request['descr'] = phpgw::clean_value($entry['descr'], 'string');
 					$request['building_part'] = phpgw::clean_value($entry['building_part'], 'string');
 					$request['coordinator'] = $survey['coordinator_id'];
@@ -491,7 +552,7 @@
 							'degree' => $entry['condition_degree'],
 							'condition_type' => $entry['condition_type'],
 							'consequence' => $entry['consequence'],
-							'probability' => $entry['probability']
+							'probability' => $entry['probability'] ? $entry['probability'] : 2
 						)
 					);
 

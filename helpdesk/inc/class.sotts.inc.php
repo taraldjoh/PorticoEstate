@@ -308,35 +308,53 @@
 
 			if ($cat_id > 0)
 			{
-				$filtermethod .= " $where cat_id=" . (int)$cat_id;
-				$where = 'AND';
+				$_cats	= CreateObject('phpgwapi.categories', -1, 'helpdesk', '.ticket')->return_sorted_array(0, false, '', '', '', false, $cat_id);
+				$_filter_cat = array($cat_id);
+				foreach ($_cats as $_cat)
+				{
+					$_filter_cat[] = $_cat['id'];
+
+				}
+
+				$filtermethod .= " $where cat_id IN (" . implode(',', $_filter_cat) . ')';
+				$where= 'AND';
 			}
 
 			if ($user_id)
 			{
+				$_membership = array();
+				$membership = array(-1);
 				if (is_array($user_id))
 				{
+					$user_ids = array(-1);
 					foreach ($user_id as &$_user_id)
 					{
-						$_user_id = abs($_user_id);
+						if($_user_id < 0)
+						{
+							$_membership = array_merge($_membership ,$GLOBALS['phpgw']->accounts->membership(abs($_user_id)));
+						}
+						$user_ids[] = abs($_user_id);
 					}
-					$filtermethod .= " {$where} assignedto IN (" . implode(', ' ,$user_id) . ')';
-					$where = 'AND';
 				}
 				else if ($user_id > 0)
 				{
-					$filtermethod .= " {$where} (assignedto={$user_id}";
-					$where = 'AND';
-
-					$membership = $GLOBALS['phpgw']->accounts->membership($user_id);
-					array_unshift($membership, array(-1));
-					$filtermethod .= ' OR (assignedto IS NULL AND phpgw_helpdesk_tickets.group_id IN (' . implode(',',array_keys($membership)) . ')))';
+					$user_ids = array((int)abs($user_id));
 				}
 				else if ($user_id < 0)
 				{
-					$filtermethod .= " {$where} assignedto=" . (int)abs($user_id);
-					$where = 'AND';
+					$user_ids = array((int)abs($user_id));
+					$_membership = $GLOBALS['phpgw']->accounts->membership(abs($user_id));
 				}
+
+				foreach ($_membership as $_key => $group_member)
+				{
+					$membership[] = $group_member->id;
+				}
+
+				$filtermethod .= " {$where} (assignedto IN (" . implode(', ' ,$user_ids) . ')';
+				$where = 'AND';
+				$filtermethod .= ' OR (assignedto IS NULL AND phpgw_helpdesk_tickets.group_id IN (' . implode(',',$membership) . ')))';
+
 			}
 
 			if ($reported_by > 0)
@@ -544,7 +562,7 @@
 				}
 			}
 
-			$sql = "SELECT * FROM phpgw_helpdesk_tickets {$acl_join} WHERE id = {$id} {$filtermethod}";
+			$sql = "SELECT DISTINCT phpgw_helpdesk_tickets.* FROM phpgw_helpdesk_tickets {$acl_join} WHERE id = {$id} {$filtermethod}";
 
 			$this->db->query($sql,__LINE__,__FILE__);
 
@@ -911,6 +929,16 @@
 
 					$this->db->query("update phpgw_helpdesk_tickets set $value_set where id='$id'", __LINE__, __FILE__);
 					$this->historylog->add('A', $id, $ticket['assignedto'], $oldassigned);
+				}
+
+				if($oldgroup_id || $ticket['group_id'])
+				{
+					if($oldassigned && ! $ticket['assignedto'])
+					{
+						$this->fields_updated[] = 'assignedto';
+						$this->db->query("UPDATE phpgw_helpdesk_tickets SET assignedto = NULL WHERE id={$id}", __LINE__, __FILE__);
+						$this->historylog->add('A', $id, '0', $oldassigned);
+					}
 				}
 
 				if (($oldgroup_id != $ticket['group_id']) && $ticket['group_id'] != 'ignore')

@@ -46,7 +46,7 @@
 			'delete_imported_records' => true,
 			'get_vendors' => true,
 			'get_users' => true,
-			'edit_survey_title' => true,
+			'edit_survey_value' => true,
 			'get_files' => true,
 			'get_request' => true,
 			'get_summation' => true,
@@ -171,8 +171,7 @@
 		{
 			if (!$this->acl_read)
 			{
-				$this->bocommon->no_access();
-				return;
+				phpgw::no_access();
 			}
 
 			if (phpgw::get_var('phpgw_return_as') == 'json')
@@ -180,10 +179,13 @@
 				return $this->query();
 			}
 
+			phpgwapi_jquery::load_widget('numberformat');
 			self::add_javascript('phpgwapi', 'jquery', 'editable/jquery.jeditable.js');
 			self::add_javascript('phpgwapi', 'jquery', 'editable/jquery.dataTables.editable.js');
 
 			$categories = $this->_get_categories();
+			$status_list = execMethod('property.bogeneric.get_list', array(
+						'type' => 'condition_survey_status', 'selected' => 0, 'add_empty' => true));
 
 			$data = array(
 				'datatable_name' => lang('condition survey'),
@@ -194,6 +196,11 @@
 								'name' => 'cat_id',
 								'text' => lang('category') . ':',
 								'list' => $categories,
+							),
+							array('type' => 'filter',
+								'name' => 'status_id',
+								'text' => lang('status') . ':',
+								'list' => $status_list,
 							)
 						),
 					),
@@ -205,7 +212,7 @@
 						'export' => true, 'allrows' => true)),
 					'new_item' => self::link(array('menuaction' => 'property.uicondition_survey.add')),
 					'allrows' => true,
-					'editor_action' => self::link(array('menuaction' => 'property.uicondition_survey.edit_survey_title')),
+					'editor_action' => self::link(array('menuaction' => 'property.uicondition_survey.edit_survey_value')),
 					'field' => array(
 						array(
 							'key' => 'id',
@@ -244,13 +251,27 @@
 							'key' => 'multiplier',
 							'label' => lang('multiplier'),
 							'sortable' => false,
-							'className' => 'right'
+							'className' => 'right',
+							'editor' => true
 						),
 						array(
 							'key' => 'cnt',
 							'label' => lang('count'),
 							'sortable' => false,
 							'className' => 'center'
+						),
+						array(
+							'key' => 'status',
+							'label' => lang('status'),
+							'sortable' => false,
+							'className' => 'center'
+						),
+						array(
+							'key' => 'summation',
+							'label' => lang('summation'),
+							'sortable' => false,
+							'className' => 'right',
+							'formatter' => 'JqueryPortico.FormatterAmount0'
 						),
 						array(
 							'key' => 'link',
@@ -370,6 +391,7 @@
 				'sort' => phpgw::get_var('sort'),
 				'dir' => phpgw::get_var('dir'),
 				'cat_id' => phpgw::get_var('cat_id', 'int', 'REQUEST', 0),
+				'status_id'=> phpgw::get_var('status_id', 'int', 'REQUEST', 0),
 				'allrows' => phpgw::get_var('length', 'int') == -1 || $export
 			);
 
@@ -1620,16 +1642,18 @@
 		}
 
 		/**
-		 * Edit title fo entity directly from table
+		 * Edit values for entity directly from table
 		 *
 		 * @param int  $id  id of entity
 		 * @param string  $value new title of entity
 		 *
 		 * @return string text to appear in ui as receipt on action
 		 */
-		public function edit_survey_title()
+		public function edit_survey_value()
 		{
 			$id = phpgw::get_var('id', 'int', 'POST');
+
+			$field_name =  phpgw::get_var('field_name');
 
 			if (!$this->acl_edit)
 			{
@@ -1639,11 +1663,19 @@
 			if ($id)
 			{
 				$values = $this->bo->read_single(array('id' => $id, 'view' => true));
-				$values['title'] = phpgw::get_var('value');
 
 				try
 				{
-					$this->bo->edit_title($values);
+					if($field_name == 'title')
+					{
+						$values['title'] = phpgw::get_var('value');
+						$this->bo->edit_title($values);
+					}
+					else if ($field_name == 'multiplier')
+					{
+						$values['multiplier'] = phpgw::get_var('value', 'float');
+						$this->bo->edit_multiplier($values);
+					}
 				}
 				catch (Exception $e)
 				{
@@ -1757,6 +1789,11 @@
 
 			foreach ($survey_list as $survey)
 			{
+				if($survey['closed'])
+				{
+					continue;
+				}
+
 				$surveys[] = array
 					(
 					'id' => $survey['id'],
