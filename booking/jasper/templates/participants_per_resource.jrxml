@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.1.1.final using JasperReports Library version 6.1.1  -->
-<!-- 2015-10-24T18:50:20 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="BKParticipants" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" isFloatColumnFooter="true" uuid="1873d2c1-c32a-44a8-872b-cceed58b6b0f">
 	<property name="net.sf.jasperreports.export.pdf.tagged" value="true"/>
 	<property name="net.sf.jasperreports.export.pdf.tag.language" value="EN-US"/>
+	<property name="ireport.zoom" value="1.1000000000000005"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
 	<style name="Sans_Normal" isDefault="true" fontName="Serif" fontSize="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 	<style name="Sans_Bold" fontName="Serif" fontSize="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 	<subDataset name="ByBuilding_preview" uuid="c4e37eff-60df-478a-8cd1-abea5e1bd145">
@@ -14,20 +15,30 @@
 		<parameter name="BUILDING_ID" class="java.lang.Integer"/>
 		<parameter name="RESOURCES" class="java.lang.String"/>
 		<parameter name="WEEKDAYS" class="java.lang.String"/>
+		<parameter name="RESOURCES_TEST" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<parameter name="RESOURCES_TEST1" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<parameter name="RESOURCES_TEST2" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
 		<queryString>
 			<![CDATA[SELECT ag.name AS aname, ba.male, ba.female, bu.id, bu.name, ag.sort as agegroup_sort, re.name AS resource_name
 				FROM bb_agegroup ag, bb_booking_agegroup ba, bb_booking bo, bb_allocation al, bb_season se, bb_building bu, bb_booking_resource br, bb_resource re
-				WHERE ba.agegroup_id = ag.id 
+				WHERE ba.agegroup_id = ag.id
 				AND ba.booking_id = bo.id
 				AND br.booking_id = bo.id
 				AND br.resource_id = re.id
 				AND bo.allocation_id = al.id
-				AND al.season_id = se.id 
-				AND se.building_id = bu.id 
+				AND al.season_id = se.id
+				AND se.building_id = bu.id
 				AND ag.active = 1
 				AND date_trunc('day' ,bo.from_) >= to_date($P{DATE_FROM} ,'YYYY-MM-DD')
 				AND date_trunc('day' ,bo.from_) <= to_date($P{DATE_TO}, 'YYYY-MM-DD')
 				AND re.id = ANY (string_to_array($P{RESOURCES}, ',')::int4[])
+AND bu.id = $P{BUILDING_ID}
 				AND EXTRACT(DOW FROM bo.from_) = ANY (string_to_array($P{WEEKDAYS}, ',')::int4[])
 				UNION
 				SELECT ag.name AS aname, ea.male, ea.female, bu.id, bu.name, ag.sort AS agegroup_sort, re.name AS resource_name
@@ -41,12 +52,17 @@
 				AND date_trunc('day' ,ev.from_) <= to_date($P{DATE_TO}, 'YYYY-MM-DD')
 				AND EXTRACT(DOW FROM ev.from_) = ANY (string_to_array($P{WEEKDAYS}, ',')::int4[])
 				AND er.resource_id = ANY (string_to_array($P{RESOURCES}, ',')::int4[])
+
+AND bu.id = $P{BUILDING_ID}
 				ORDER BY resource_name ASC, agegroup_sort]]>
 		</queryString>
-		<field name="resource_name" class="java.lang.String"/>
 		<field name="aname" class="java.lang.String"/>
 		<field name="male" class="java.lang.Integer"/>
 		<field name="female" class="java.lang.Integer"/>
+		<field name="id" class="java.lang.Integer"/>
+		<field name="name" class="java.lang.String"/>
+		<field name="agegroup_sort" class="java.lang.Integer"/>
+		<field name="resource_name" class="java.lang.String"/>
 	</subDataset>
 	<parameter name="BK_DATE_FROM" class="java.lang.String">
 		<defaultValueExpression><![CDATA["2013-01-01"]]></defaultValueExpression>
@@ -59,6 +75,18 @@
 	</parameter>
 	<parameter name="BK_WEEKDAYS" class="java.lang.String">
 		<defaultValueExpression><![CDATA["1,2,3,4,5,6,7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BK_RESOURCES_TEST" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BK_RESOURCES_TEST1" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BK_RESOURCES_TEST2" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BK_ACTIV_ARRAY" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
 	<queryString>
 		<![CDATA[SELECT DISTINCT bu.id AS building_id, bu.name AS building_name
@@ -142,6 +170,15 @@
 							<datasetParameter name="WEEKDAYS">
 								<datasetParameterExpression><![CDATA[$P{BK_WEEKDAYS}]]></datasetParameterExpression>
 							</datasetParameter>
+							<datasetParameter name="RESOURCES_TEST">
+								<datasetParameterExpression><![CDATA[$P{BK_RESOURCES_TEST}]]></datasetParameterExpression>
+							</datasetParameter>
+							<datasetParameter name="RESOURCES_TEST1">
+								<datasetParameterExpression><![CDATA[$P{BK_RESOURCES_TEST1}]]></datasetParameterExpression>
+							</datasetParameter>
+							<datasetParameter name="RESOURCES_TEST2">
+								<datasetParameterExpression><![CDATA[$P{BK_RESOURCES_TEST2}]]></datasetParameterExpression>
+							</datasetParameter>
 						</datasetRun>
 					</dataset>
 				</crosstabDataset>
@@ -183,7 +220,7 @@
 							</box>
 							<textField>
 								<reportElement style="Sans_Bold" x="0" y="0" width="80" height="70" uuid="184c30a1-fa45-4ee3-8be6-8a90ebe1ef0d"/>
-								<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None"/>
 								<textFieldExpression><![CDATA[$V{AgeGroup}]]></textFieldExpression>
 							</textField>
 							<staticText>
