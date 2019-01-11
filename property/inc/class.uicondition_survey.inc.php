@@ -381,15 +381,18 @@
 		{
 			$search = phpgw::get_var('search');
 			$order = phpgw::get_var('order');
+			$sort = phpgw::get_var('sort');
 			$draw = phpgw::get_var('draw', 'int');
+			$columns = phpgw::get_var('columns');
 			$export = phpgw::get_var('export', 'bool');
 
 			$params = array(
 				'start' => phpgw::get_var('start', 'int', 'REQUEST', 0),
 				'results' => phpgw::get_var('length', 'int', 'REQUEST', 0),
 				'query' => $search['value'],
-				'sort' => phpgw::get_var('sort'),
-				'dir' => phpgw::get_var('dir'),
+				'order' => is_array($order) ? $columns[$order[0]['column']]['data'] : $order,
+				'sort' => is_array($order) ? $order[0]['dir'] : $sort,
+				'dir' => is_array($order) ? $order[0]['dir'] : $sort,
 				'cat_id' => phpgw::get_var('cat_id', 'int', 'REQUEST', 0),
 				'status_id'=> phpgw::get_var('status_id', 'int', 'REQUEST', 0),
 				'allrows' => phpgw::get_var('length', 'int') == -1 || $export
@@ -1001,33 +1004,32 @@
 			$this->excel_out($data, $names, $descr, $input_type = array(), $filename);
 		}
 
-		function excel_out( $data, $names, $descr, $input_type = array(), $filename = '' )
+		function excel_out( $data, $names, $descr, $input_type = array(), $filename = '')
 		{
 			$condition_survey = $data['condition_survey'];
-//			_debug_array($condition_survey);die();
+			phpgw::import_class('phpgwapi.phpspreadsheet');
 
-			phpgw::import_class('phpgwapi.phpexcel');
 			if ($filename)
 			{
 				$filename_arr = explode('.', str_replace(' ', '_', basename($filename)));
-				$filename = $filename_arr[0] . '.xlsx';
+				$filename = $filename_arr[0];
 			}
 			else
 			{
-				$filename = str_replace(' ', '_', $GLOBALS['phpgw_info']['user']['account_lid']) . '.xlsx';
+				$filename = str_replace(' ', '_', $GLOBALS['phpgw_info']['user']['account_lid']);
 			}
+			$date_time = str_replace(array(' ', '/'), '_', $GLOBALS['phpgw']->common->show_date(time()));
+
+			$suffix = 'xlsx';
+
+			$filename .= "_{$date_time}.{$suffix}";
 
 			$browser = CreateObject('phpgwapi.browser');
 			$browser->content_header($filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
-			$cacheMethod = PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp;
-			$cacheSettings = array('memoryCacheSize' => '32MB');
-			PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
+			$spreadsheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-			$objPHPExcel = new PHPExcel();
-
-
-			$objPHPExcel->getProperties()->setCreator($GLOBALS['phpgw_info']['user']['fullname'])
+			$spreadsheet->getProperties()->setCreator($GLOBALS['phpgw_info']['user']['fullname'])
 				->setLastModifiedBy($GLOBALS['phpgw_info']['user']['fullname'])
 				->setTitle("Download from {$GLOBALS['phpgw_info']['server']['system_name']}")
 				->setSubject("Office 2007 XLSX Document")
@@ -1036,19 +1038,18 @@
 				->setCategory("downloaded file");
 
 			// Set active sheet index to the first sheet, so Excel opens this as the first sheet
-			$objPHPExcel->setActiveSheetIndex(0);
-//			$sheet = $objPHPExcel->getActiveSheet();
-// 			$sheet->getRowDimension('1');
+			$spreadsheet->setActiveSheetIndex(0);
 
-			$objPHPExcel->getActiveSheet()->getStyle('A1:T14')->getFill()->applyFromArray(array(
-				'type' => PHPExcel_Style_Fill::FILL_SOLID,
-				'startcolor' => array(
+
+			$spreadsheet->getActiveSheet()->getStyle('A1:T14')->getFill()->applyFromArray(array(
+				'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+				'startColor' => array(
 					'rgb' => '99cc33'
 				)
 			));
-			$objPHPExcel->getActiveSheet()->getStyle('A15:T15')->getFill()->applyFromArray(array(
-				'type' => PHPExcel_Style_Fill::FILL_SOLID,
-				'startcolor' => array(
+			$spreadsheet->getActiveSheet()->getStyle('A15:T15')->getFill()->applyFromArray(array(
+				'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+				'startColor' => array(
 					'rgb' => 'ffff66'
 				)
 			));
@@ -1070,28 +1071,25 @@
 				'report_date' => 'Analyse dato',
 				'multiplier' => 'Multiplikator',
 			);
-			PHPExcel_Shared_Font::setAutoSizeMethod(PHPExcel_Shared_Font::AUTOSIZE_METHOD_EXACT);
-//			_debug_array($condition_survey);die();
+
 			foreach ($lang as $key => $translation)
 			{
 				if (isset($condition_survey[$key]))
 				{
-					$objPHPExcel->setActiveSheetIndex(0)->setCellValueByColumnAndRow(1, $row, $translation);
-					$objPHPExcel->setActiveSheetIndex(0)->setCellValueByColumnAndRow(2, $row, $condition_survey[$key]);
-					$objPHPExcel->getActiveSheet()->getStyle("B{$row}")->getAlignment()->applyFromArray(
+					$spreadsheet->setActiveSheetIndex(0)->setCellValueByColumnAndRow(1, $row, $translation);
+					$spreadsheet->setActiveSheetIndex(0)->setCellValueByColumnAndRow(2, $row, $condition_survey[$key]);
+					$spreadsheet->getActiveSheet()->getStyle("B{$row}")->getAlignment()->applyFromArray(
 						array(
-							'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
-							'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
-							//	'justify'   => PHPExcel_Style_Alignment::VERTICAL_JUSTIFY,
+							'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+							'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
 							'rotation' => 0,
 							'wrap' => false
 						)
 					);
-					$objPHPExcel->getActiveSheet()->getStyle("C{$row}")->getAlignment()->applyFromArray(
+					$spreadsheet->getActiveSheet()->getStyle("C{$row}")->getAlignment()->applyFromArray(
 						array(
-							'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
-							'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
-							//	'justify'   => PHPExcel_Style_Alignment::VERTICAL_JUSTIFY,
+							'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+							'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
 							'rotation' => 0,
 							'wrap' => false
 						)
@@ -1101,17 +1099,18 @@
 			}
 			foreach (range('B', 'C', 'D') as $columnID)
 			{
-				$objPHPExcel->getActiveSheet()->getColumnDimension($columnID)->setAutoSize(true);
+				$spreadsheet->getActiveSheet()->getColumnDimension($columnID)->setAutoSize(true);
 			}
 
 			$count_uicols_name = count($names);
 			$_first_row = 15;
 
+
 			$text_format = array();
 			//overskrifter
 			$m = 0;
 			$col = 'A';
-			$objPHPExcel->getActiveSheet()->getRowDimension($_first_row)->setRowHeight(210);
+			$spreadsheet->getActiveSheet()->getRowDimension($_first_row)->setRowHeight(210);
 			for ($k = 0; $k < $count_uicols_name; $k++)
 			{
 				if (!isset($input_type[$k]) || $input_type[$k] != 'hidden')
@@ -1120,24 +1119,13 @@
 					{
 						$text_format[$m] = true;
 					}
-					$objPHPExcel->setActiveSheetIndex(0)->setCellValueByColumnAndRow($m, $_first_row, $descr[$k]);
-					if ($m > 0)
+					$spreadsheet->setActiveSheetIndex(0)->setCellValueByColumnAndRow($m, $_first_row, $descr[$k]);
+//					if ($m > 0)
 					{
-						$objPHPExcel->getActiveSheet()->getStyle("{$col}{$_first_row}")->getAlignment()->setTextRotation(90);
+						$spreadsheet->getActiveSheet()->getStyle("{$col}{$_first_row}")->getAlignment()->setTextRotation(90);
 					}
 					$m++;
 					$col++;
-					/*
-					  $objPHPExcel->getActiveSheet()->getStyle("D{$_first_row}")->getAlignment()->applyFromArray(
-					  array(
-					  'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
-					  'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
-					  //	'justify'   => PHPExcel_Style_Alignment::VERTICAL_JUSTIFY,
-					  'rotation'   => 90,
-					  'wrap'       => false
-					  )
-					  );
-					 */
 				}
 			}
 			//data
@@ -1167,38 +1155,37 @@
 					{
 						if (isset($text_format[$i]))
 						{
-							$objPHPExcel->setActiveSheetIndex(0)->setCellValueExplicitByColumnAndRow($i, $line, $row[$i], PHPExcel_Cell_DataType::TYPE_STRING);
+							$spreadsheet->setActiveSheetIndex(0)->setCellValueExplicitByColumnAndRow($i, $line, $row[$i], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
 						}
 						else
 						{
-							$objPHPExcel->setActiveSheetIndex(0)->setCellValueByColumnAndRow($i, $line, $row[$i]);
+							$spreadsheet->setActiveSheetIndex(0)->setCellValueByColumnAndRow($i, $line, $row[$i]);
 						}
-						$objPHPExcel->getActiveSheet()->getStyle("{$col}{$line}")->getAlignment()->applyFromArray(
+						$spreadsheet->getActiveSheet()->getStyle("{$col}{$line}")->getAlignment()->applyFromArray(
 							array(
-								'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
-								'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+								'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+								'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
 								'rotation' => 0,
 								'wrap' => true
 							)
 						);
-						$objPHPExcel->getActiveSheet()->getRowDimension($line)->setRowHeight(100);
-
+						$spreadsheet->getActiveSheet()->getRowDimension($line)->setRowHeight(100);
 
 						$col++;
 					}
 				}
 			}
 
-			// Save Excel 2007 file
-//			$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
-			$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-			$objWriter->setUseDiskCaching(true, $GLOBALS['phpgw_info']['server']['temp_dir']);
-			$objWriter->setOffice2003Compatibility(true);
-//			echo "Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB";
-//			die();
+/// slutt ny kode
 
+			$objWriter = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
 			$objWriter->save('php://output');
 		}
+
+
+
+
+
 		public function import()
 		{
 			$id = phpgw::get_var('id', 'int', 'REQUEST');
@@ -1361,12 +1348,16 @@
 			}
 			else if ($cached_file)
 			{
-				phpgw::import_class('phpgwapi.phpexcel');
+				phpgw::import_class('phpgwapi.phpspreadsheet');
 
 				try
 				{
-					$objPHPExcel = PHPExcel_IOFactory::load($cached_file);
-					$AllSheets = $objPHPExcel->getSheetNames();
+
+					$inputFileType	= \PhpOffice\PhpSpreadsheet\IOFactory::identify($cached_file);
+					$reader			= \PhpOffice\PhpSpreadsheet\IOFactory::createReader($inputFileType);
+					$reader->setReadDataOnly(true);
+					$spreadsheet	= $reader->load($cached_file);
+					$AllSheets = $spreadsheet->getSheetNames();
 
 					$sheets = array();
 					if ($AllSheets)
@@ -1380,10 +1371,11 @@
 							);
 					}
 
-					$objPHPExcel->setActiveSheetIndex((int)$sheet_id);
-					$rows = $objPHPExcel->getActiveSheet()->getHighestDataRow();
-					$highestColumm = $objPHPExcel->getActiveSheet()->getHighestDataColumn();
-					$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumm);
+					$spreadsheet->setActiveSheetIndex((int)$sheet_id);
+					$rows = $spreadsheet->getActiveSheet()->getHighestRow();
+					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn();
+					$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+
 				}
 				catch (Exception $e)
 				{
@@ -1404,13 +1396,13 @@
 			{
 
 				$cols = array();
-				for ($j = 0; $j < $highestColumnIndex; $j++)
+				for ($j = 1; $j <= $highestColumnIndex; $j++)
 				{
-					$cols[] = $this->getexcelcolumnname($j);
+					$cols[] = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($j);
 				}
 
 				$html_table .= "<thead><tr><th align = 'center'>" . lang('select') . "</th><th align = 'center'>" . lang('row') . "</th><th align='center'>" . implode("</th><th align='center'>", $cols) . '</th></tr></thead>';
-				foreach ($objPHPExcel->getActiveSheet()->getRowIterator() as $row)
+				foreach ($spreadsheet->getActiveSheet()->getRowIterator() as $row)
 				{
 					if ($i > 20)
 					{
@@ -1471,10 +1463,10 @@
 
 				phpgw::import_class('phpgwapi.sbox');
 
-				for ($j = 0; $j < $highestColumnIndex; $j++)
+				for ($j = 1; $j <= $highestColumnIndex; $j++)
 				{
-					$_column = $this->getexcelcolumnname($j);
-					$_value = $objPHPExcel->getActiveSheet()->getCellByColumnAndRow($j, $start_line)->getCalculatedValue();
+					$_column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($j);
+					$_value = $spreadsheet->getActiveSheet()->getCellByColumnAndRow($j , $start_line)->getCalculatedValue();
 					$selected = isset($columns[$_column]) && $columns[$_column] ? $columns[$_column] : '';
 
 					$_listbox = phpgwapi_sbox::getArrayItem("columns[{$_column}]", $selected, $_options, true);
@@ -1484,12 +1476,12 @@
 			else if ($rows > 1 && $step == 4)
 			{
 
-				$rows = $objPHPExcel->getActiveSheet()->getHighestDataRow();
-				$rows = $rows ? $rows + 1 : 0;
+				$rows = $spreadsheet->getActiveSheet()->getHighestDataRow();
+				$rows = $rows ? $rows : 1;
 
 				$import_data = array();
 
-				for ($i = $start_line; $i < $rows; $i++)
+				for ($i = $start_line; $i <= $rows; $i++)
 				{
 					$_result = array();
 
@@ -1497,7 +1489,7 @@
 					{
 						if ($_value_key != '_skip_import_')
 						{
-							$_result[$_value_key] = $objPHPExcel->getActiveSheet()->getCell("{$_row_key}{$i}")->getCalculatedValue();
+							$_result[$_value_key] = $spreadsheet->getActiveSheet()->getCell("{$_row_key}{$i}")->getCalculatedValue();
 						}
 					}
 					$import_data[] = $_result;
@@ -1524,8 +1516,6 @@
 
 
 			$html_table .= '</table>';
-
-
 
 
 			if (isset($survey['location_code']) && $survey['location_code'])
@@ -1569,18 +1559,7 @@
 		 */
 		private function getexcelcolumnname( $index )
 		{
-			//Get the quotient : if the index superior to base 26 max ?
-			$quotient = $index / 26;
-			if ($quotient >= 1)
-			{
-				//If yes, get top level column + the current column code
-				return $this->getexcelcolumnname($quotient - 1) . chr(($index % 26) + 65);
-			}
-			else
-			{
-				//If no just return the current column code
-				return chr(65 + $index);
-			}
+			return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index);
 		}
 
 		/**

@@ -627,6 +627,8 @@ HTML;
 			$uicols['descr'][] = lang('priority');
 			$uicols['name'][] = 'subject';
 			$uicols['descr'][] = lang('subject');
+			$uicols['input_type'][] = 'text';
+			$uicols['datatype'][] = 'V';
 
 			$location_types = execMethod('property.soadmin_location.select_location_type');
 //			$level_assigned = isset($this->bo->config->config_data['list_location_level']) && $this->bo->config->config_data['list_location_level'] ? $this->bo->config->config_data['list_location_level'] : array();
@@ -815,6 +817,13 @@ HTML;
 				);
 
 				$values_combo_box[4] = $this->_get_user_list($this->user_id);
+
+				$assigned_groups = $this->bo->get_assigned_groups($this->status_id);
+
+				foreach ($assigned_groups as $assigned_group)
+				{
+					array_unshift($values_combo_box[4], array('id' => $assigned_group['id'], 'name' => $assigned_group['name']));
+				}
 
 				$filter_tts_assigned_to_me = $GLOBALS['phpgw_info']['user']['preferences']['property']['tts_assigned_to_me'];
 
@@ -3388,7 +3397,7 @@ HTML;
 			$pdf = CreateObject('phpgwapi.pdf');
 
 			$pdf->ezSetMargins(50, 70, 50, 50);
-			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica.afm');
+			$pdf->selectFont('Helvetica');
 
 			// put a line top and bottom on all the pages
 			$all = $pdf->openObject();
@@ -3566,9 +3575,9 @@ HTML;
 			));
 
 			$pdf->ezSetDy(-10);
-			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica-Bold.afm');
+			$pdf->selectFont('Helvetica-Bold');
 			$pdf->ezText(lang('descr') . ':', 20);
-			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica.afm');
+			$pdf->selectFont('Helvetica');
 
 			$contact_data = $this->bocommon->initiate_ui_contact_lookup(array(
 				'contact_id' => $ticket['contact_id'],
@@ -3683,9 +3692,9 @@ HTML;
 				$contact_block = '';
 			}
 
-//			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica-Bold.afm');
+//			$pdf->selectFont('Helvetica-Bold');
 //			$pdf->ezText('Kontakt på bygget:', 14);
-//			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica.afm');
+//			$pdf->selectFont('Helvetica');
 //			$pdf->ezText($contact_name, 14);
 //			$pdf->ezText($contact_email, 14);
 //			$pdf->ezText($contact_phone, 14);
@@ -3697,9 +3706,9 @@ HTML;
 			if($location_exceptions)
 			{
 				$pdf->ezSetDy(-20);
-				$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica-Bold.afm');
+				$pdf->selectFont('Helvetica-Bold');
 				$pdf->ezText(lang('important information'), 14);
-				$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica.afm');
+				$pdf->selectFont('Helvetica');
 			}
 
 			foreach ($location_exceptions as $location_exception)
@@ -3712,9 +3721,9 @@ HTML;
 				}
 			}
 			$pdf->ezSetDy(-20);
-			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica-Bold.afm');
+			$pdf->selectFont('Helvetica-Bold');
 			$pdf->ezText("Faktura må merkes med ordrenummer: {$ticket['order_id']} og ressursnr.:{$ressursnr}", 14);
-			$pdf->selectFont(PHPGW_API_INC . '/pdf/fonts/Helvetica.afm');
+			$pdf->selectFont('Helvetica');
 			if ($content)
 			{
 				$pdf->ezSetDy(-20);

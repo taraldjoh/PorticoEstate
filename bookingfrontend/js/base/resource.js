@@ -26,7 +26,13 @@ $(document).ready(function ()
         $('html,body').animate({
             scrollTop: $(".calendar-content").offset().top - 100},
             'slow');
-    });	
+    });
+
+	$(document).on('click', '.tooltip-desc-btn', function () {
+        $(this).find(".tooltip-desc").show();
+    });
+
+	$(".overlay").hide();
 });
 
 function PopulateResourceData() {
@@ -78,6 +84,15 @@ function roundMinutes(date) {
 	return date.getTime();
 }
 
+function IsExistingEvent(id, eventsArray) {
+	for(var i = 0; i<eventsArray.length; i++) {
+		if(eventsArray[i].id == id) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function PopulateCalendarEvents() {
     $(".overlay").show();
     $('.weekNumber').remove();
@@ -93,135 +108,239 @@ function PopulateCalendarEvents() {
                     var visible = true;
                     
                     if(typeof result.ResultSet.Result[k].Sun !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Sun.id, eventsArray))
-                    {
-                        var event_infourl = result.ResultSet.Result[k].Sun.info_url;
+					!IsExistingEvent([result.ResultSet.Result[k].Sun.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sun.from_, result.ResultSet.Result[k].Sun.type, result.ResultSet.Result[k].Sun.wday].join("."), eventsArray))
+					{
+						var event_infourl = result.ResultSet.Result[k].Sun.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
 						}
-						eventsArray.push({ id: [result.ResultSet.Result[k].Sun.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sun.from_, result.ResultSet.Result[k].Sun.type].join(""),
+						var currentStartDate = new Date((result.ResultSet.Result[k].Sun.date + "T" + result.ResultSet.Result[k].Sun.from_).toString());
+						currentStartDate.setHours((result.ResultSet.Result[k].Sun.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Sun.from_).substring(3, 5));
+
+						var currentEndDate = new Date((result.ResultSet.Result[k].Sun.date  + "T" + result.ResultSet.Result[k].Sun.to_).toString());
+						if((result.ResultSet.Result[k].Sun.to_).substring(0, 2) != "24") {							
+							currentEndDate.setHours((result.ResultSet.Result[k].Sun.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Sun.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+
+						eventsArray.push({ id: [result.ResultSet.Result[k].Sun.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sun.from_, result.ResultSet.Result[k].Sun.type, result.ResultSet.Result[k].Sun.wday].join("."),
 							name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Sun.type],
-							content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
+                            content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
                             description: result.ResultSet.Result[k].Sun.description,
-                            startDate: new Date((result.ResultSet.Result[k].Sun.date + "T" + result.ResultSet.Result[k].Sun.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Sun.date + "T" + result.ResultSet.Result[k].Sun.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });                    
                     }
                     
                     if(typeof result.ResultSet.Result[k].Mon !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Mon.id, eventsArray))
-                    {                        
+					!IsExistingEvent([result.ResultSet.Result[k].Mon.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Mon.from_, result.ResultSet.Result[k].Mon.type, result.ResultSet.Result[k].Mon.wday].join("."), eventsArray))
+                    {
                         var event_infourl = result.ResultSet.Result[k].Mon.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
+                        }
+						var currentStartDate = new Date((result.ResultSet.Result[k].Mon.date  + "T" + result.ResultSet.Result[k].Mon.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Mon.date).substring(8, 10));	
+						currentStartDate.setHours((result.ResultSet.Result[k].Mon.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Mon.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Mon.date  + "T" + result.ResultSet.Result[k].Mon.to_).toString());
+						
+						if((result.ResultSet.Result[k].Mon.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Mon.date).substring(8, 10));							
+							currentEndDate.setHours((result.ResultSet.Result[k].Mon.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Mon.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
 						}
-						eventsArray.push({ id: [result.ResultSet.Result[k].Mon.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Mon.from_, result.ResultSet.Result[k].Mon.type].join(""),
-							name: result.ResultSet.Result[k].resource,
+						
+						eventsArray.push({ id: [result.ResultSet.Result[k].Mon.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Mon.from_, result.ResultSet.Result[k].Mon.type, result.ResultSet.Result[k].Mon.wday].join("."),
+						    name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Mon.type],
-							content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
-							description: result.ResultSet.Result[k].Mon.description,
-                            startDate: new Date((result.ResultSet.Result[k].Mon.date + "T" + result.ResultSet.Result[k].Mon.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Mon.date + "T" + result.ResultSet.Result[k].Mon.to_).toString()),
+                            content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
+                            description: result.ResultSet.Result[k].Mon.description,
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });       
                     }
                     if(typeof result.ResultSet.Result[k].Tue !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Tue.id, eventsArray))
+					!IsExistingEvent([result.ResultSet.Result[k].Tue.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Tue.from_, result.ResultSet.Result[k].Tue.type, result.ResultSet.Result[k].Tue.wday].join("."), eventsArray))
                     {
                         var event_infourl = result.ResultSet.Result[k].Tue.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
-                        }
-                        eventsArray.push({ id: [result.ResultSet.Result[k].Tue.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Tue.from_, result.ResultSet.Result[k].Tue.type].join(""),
+						}
+						var currentStartDate = new Date((result.ResultSet.Result[k].Tue.date + "T" + result.ResultSet.Result[k].Tue.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Tue.date).substring(8, 10));
+						currentStartDate.setHours((result.ResultSet.Result[k].Tue.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Tue.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Tue.date + "T" + result.ResultSet.Result[k].Tue.to_).toString());
+						if((result.ResultSet.Result[k].Tue.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Tue.date).substring(8, 10));
+							currentEndDate.setHours((result.ResultSet.Result[k].Tue.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Tue.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+
+                        eventsArray.push({ id: [result.ResultSet.Result[k].Tue.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Tue.from_, result.ResultSet.Result[k].Tue.type, result.ResultSet.Result[k].Tue.wday].join("."),
                             name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Tue.type],
                             content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
                             description: result.ResultSet.Result[k].Tue.description,
-                            startDate: new Date((result.ResultSet.Result[k].Tue.date + "T" + result.ResultSet.Result[k].Tue.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Tue.date + "T" + result.ResultSet.Result[k].Tue.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });
                     }
                     if(typeof result.ResultSet.Result[k].Wed !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Wed.id, eventsArray))
+					!IsExistingEvent([result.ResultSet.Result[k].Wed.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Wed.from_, result.ResultSet.Result[k].Wed.type, result.ResultSet.Result[k].Wed.wday].join("."), eventsArray))
                     {
                         var event_infourl = result.ResultSet.Result[k].Wed.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
-                        }
-                        eventsArray.push({ id: [result.ResultSet.Result[k].Wed.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Wed.from_, result.ResultSet.Result[k].Wed.type].join(""),
+						}
+						var currentStartDate = new Date((result.ResultSet.Result[k].Wed.date + "T" + result.ResultSet.Result[k].Wed.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Wed.date).substring(8, 10));
+						currentStartDate.setHours((result.ResultSet.Result[k].Wed.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Wed.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Wed.date  + "T" + result.ResultSet.Result[k].Wed.to_).toString());
+						if((result.ResultSet.Result[k].Wed.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Wed.date).substring(8, 10));
+							currentEndDate.setHours((result.ResultSet.Result[k].Wed.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Wed.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+
+                        eventsArray.push({ id: [result.ResultSet.Result[k].Wed.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Wed.from_, result.ResultSet.Result[k].Wed.type, result.ResultSet.Result[k].Wed.wday].join("."),
                             name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Wed.type],
                             content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
                             description: result.ResultSet.Result[k].Wed.description,
-                            startDate: new Date((result.ResultSet.Result[k].Wed.date + "T" + result.ResultSet.Result[k].Wed.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Wed.date + "T" + result.ResultSet.Result[k].Wed.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });
                     }
                     if(typeof result.ResultSet.Result[k].Thu !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Thu.id, eventsArray))
+					!IsExistingEvent([result.ResultSet.Result[k].Thu.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Thu.from_, result.ResultSet.Result[k].Thu.type, result.ResultSet.Result[k].Thu.wday].join("."), eventsArray))
                     {
                         var event_infourl = result.ResultSet.Result[k].Thu.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
-                        }
-                        eventsArray.push({ id: [result.ResultSet.Result[k].Thu.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Thu.from_, result.ResultSet.Result[k].Thu.type].join(""),
+						}
+						var currentStartDate = new Date((result.ResultSet.Result[k].Thu.date  + "T" + result.ResultSet.Result[k].Thu.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Thu.date).substring(8, 10));
+						currentStartDate.setHours((result.ResultSet.Result[k].Thu.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Thu.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Thu.date  + "T" + result.ResultSet.Result[k].Thu.to_).toString());
+						if((result.ResultSet.Result[k].Thu.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Thu.date).substring(8, 10));
+							currentEndDate.setHours((result.ResultSet.Result[k].Thu.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Thu.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+
+                        eventsArray.push({ id: [result.ResultSet.Result[k].Thu.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Thu.from_, result.ResultSet.Result[k].Thu.type, result.ResultSet.Result[k].Thu.wday].join("."),
                             name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Thu.type],
                             content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
                             description: result.ResultSet.Result[k].Thu.description,
-                            startDate: new Date((result.ResultSet.Result[k].Thu.date + "T" + result.ResultSet.Result[k].Thu.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Thu.date + "T" + result.ResultSet.Result[k].Thu.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });
                     }
                     if(typeof result.ResultSet.Result[k].Fri !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Fri.id, eventsArray))
+					!IsExistingEvent([result.ResultSet.Result[k].Fri.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Fri.from_, result.ResultSet.Result[k].Fri.type, result.ResultSet.Result[k].Fri.wday].join("."), eventsArray))
                     {
-                        var event_infourl = result.ResultSet.Result[k].Fri.info_url;
+						var event_infourl = result.ResultSet.Result[k].Fri.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
-                        }
-                        eventsArray.push({ id: [result.ResultSet.Result[k].Fri.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Fri.from_, result.ResultSet.Result[k].Fri.type].join(""),
+						}
+                        var currentStartDate = new Date((result.ResultSet.Result[k].Fri.date + "T" + result.ResultSet.Result[k].Fri.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Fri.date).substring(8, 10));
+						currentStartDate.setHours((result.ResultSet.Result[k].Fri.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Fri.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Fri.date + "T" + result.ResultSet.Result[k].Fri.to_).toString());
+						if((result.ResultSet.Result[k].Fri.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Fri.date).substring(8, 10));
+							currentEndDate.setHours((result.ResultSet.Result[k].Fri.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Fri.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+						
+                        eventsArray.push({ id: [result.ResultSet.Result[k].Fri.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Fri.from_, result.ResultSet.Result[k].Fri.type, result.ResultSet.Result[k].Fri.wday].join("."),
                             name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Fri.type],
                             content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"'></span>",
                             description: result.ResultSet.Result[k].Fri.description,
-                            startDate: new Date((result.ResultSet.Result[k].Fri.date + "T" + result.ResultSet.Result[k].Fri.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Fri.date + "T" + result.ResultSet.Result[k].Fri.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });
                     }
                     if(typeof result.ResultSet.Result[k].Sat !== "undefined" &&
-                            $.inArray(result.ResultSet.Result[k].Sat.id, eventsArray))
+					!IsExistingEvent([result.ResultSet.Result[k].Sat.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sat.from_, result.ResultSet.Result[k].Sat.type, result.ResultSet.Result[k].Sat.wday].join("."), eventsArray))
                     {
                         var event_infourl = result.ResultSet.Result[k].Sat.info_url;
                         while(event_infourl.indexOf("amp;") !== -1) {
                             event_infourl = event_infourl.replace("amp;",'');
-                        }
-                        eventsArray.push({ id: [result.ResultSet.Result[k].Sat.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sat.from_, result.ResultSet.Result[k].Sat.type].join(""),
+						}
+						var currentStartDate = new Date((result.ResultSet.Result[k].Sat.date + "T" + result.ResultSet.Result[k].Sat.from_).toString());
+						currentStartDate.setDate((result.ResultSet.Result[k].Sat.date).substring(8, 10));
+						currentStartDate.setHours((result.ResultSet.Result[k].Sat.from_).substring(0, 2));
+						currentStartDate.setMinutes((result.ResultSet.Result[k].Sat.from_).substring(3, 5));
+						
+						var currentEndDate = new Date((result.ResultSet.Result[k].Sat.date + "T" + result.ResultSet.Result[k].Sat.to_).toString());
+						if((result.ResultSet.Result[k].Sat.to_).substring(0, 2) != "24") {
+							currentEndDate.setDate((result.ResultSet.Result[k].Sat.date).substring(8, 10));
+							currentEndDate.setHours((result.ResultSet.Result[k].Sat.to_).substring(0, 2));
+							currentEndDate.setMinutes((result.ResultSet.Result[k].Sat.to_).substring(3, 5));
+						} else {
+							currentStartDate =  new Date(currentStartDate.getFullYear(), currentStartDate.getMonth(), currentStartDate.getDate());
+							currentEndDate =  new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), currentEndDate.getDate());
+						}
+
+						eventsArray.push({ id: [result.ResultSet.Result[k].Sat.id, result.ResultSet.Result[k].resource, result.ResultSet.Result[k].Sat.from_, result.ResultSet.Result[k].Sat.type, result.ResultSet.Result[k].Sat.wday].join("."),
                             name: result.ResultSet.Result[k].resource,
 							resource: result.ResultSet.Result[k].resource_id,
                             color: colors[result.ResultSet.Result[k].Sat.type],
                             content: "<span data-url='"+event_infourl+"' class='event-id' value='"+result.ResultSet.Result[k].resource+"' ></span>",
                             description: result.ResultSet.Result[k].Sat.description,
-                            startDate: new Date((result.ResultSet.Result[k].Sat.date + "T" + result.ResultSet.Result[k].Sat.from_).toString()),
-                            endDate: new Date((result.ResultSet.Result[k].Sat.date + "T" + result.ResultSet.Result[k].Sat.to_).toString()),
+                            startDate: currentStartDate,
+                            endDate: currentEndDate,
                             disabled: true,
                             visible: visible
                         });
