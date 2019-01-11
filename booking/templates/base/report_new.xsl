@@ -1,6 +1,6 @@
 <xsl:template match="data" xmlns:php="http://php.net/xsl">
     <style type="text/css">
-        #agegroup td {padding: 0 0.3em;}        
+        #agegroup td {padding: 0 0.3em;}
     </style>
     <!--div id="content">
 
@@ -17,7 +17,7 @@
 			<div id="report_new">
 				<fieldset>
 					<input type="hidden" name="report_id" value="{report/report_id}"/>
-                        
+
 					<div class="pure-g">
 						<div class="pure-u-1">
 							<div class="heading">
@@ -53,14 +53,14 @@
 										<xsl:value-of select="php:function('lang', 'Activity')" />
 									</h4>
 								</label>
-								<select name="activity_id" id="field_activity" class="pure-u-1 pure-u-sm-1-2 pure-u-lg-1-3">
-									<xsl:attribute name="data-validation">
+								<select name="activity_id2" id="field_activity2" class="pure-u-1 pure-u-sm-1-2 pure-u-lg-1-3">
+									<xsl:attribute name="data-validation2">
 										<xsl:text>number</xsl:text>
 									</xsl:attribute>
-									<xsl:attribute name="data-validation-allowing">
+									<xsl:attribute name="data-validation-allowing2">
 										<xsl:text>positive</xsl:text>
 									</xsl:attribute>
-									<xsl:attribute name="data-validation-error-msg">
+									<xsl:attribute name="data-validation-error-msg2">
 										<xsl:value-of select="php:function('lang', 'Please select an activity')" />
 									</xsl:attribute>
 									<option value="-1">
@@ -79,6 +79,37 @@
 									</xsl:for-each>
 								</select>
 							</div>
+
+							<div class="pure-control-group">
+								<label for="field_activity" style="vertical-align:top;">
+									<h4>
+										<xsl:value-of select="php:function('lang', 'Please select an activity')" />
+									</h4>
+								</label>
+								<ul style="display:inline-block;list-style:none;padding:0px;margin:0px;">
+									<xsl:for-each select="activities">
+										<li>
+											<label>
+												<input type="checkbox" name="activity_id[]" value="{id}">
+													<xsl:attribute name="data-validation">checkbox_group</xsl:attribute>
+													<xsl:attribute name="data-validation-qty">min1</xsl:attribute>
+													<!--xsl:if test="selected = 1"-->
+													<!--/xsl:if-->
+													<xsl:attribute name="data-validation-error-msg">
+														<xsl:value-of select="php:function('lang', '-- select an activity --')" />
+													</xsl:attribute>
+												</input>
+												<xsl:value-of select="name"/>
+											</label>
+										</li>
+									</xsl:for-each>
+								</ul>
+							</div>
+
+
+
+
+
 							<div class="pure-control-group">
 								<label for="field_description">
 									<h4>
@@ -91,7 +122,7 @@
 							</div>
 						</div>
 					</div>
-                        
+
 					<div class="pure-g">
 						<div class="pure-u-1">
 							<div class="heading">
@@ -142,7 +173,7 @@
 								</div>
 							</div>
 						</div>
-                            
+
 						<div class="pure-u-1">
 							<div class="heading">
 								<legend>
@@ -185,7 +216,7 @@
 											</input>
 										</div>
 									</div>
-									
+
 									<div class="pure-g" >
 										<div class="pure-u-lg-5-5 pure-u-md-1-1 pure-u-sm-1-1" >
 											<h4>
@@ -194,13 +225,13 @@
 										</div>
 
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12">
-											<input maxlength="2" size="2" id="start_hour" name="start_hour" type="text" placeholder = "00" value="{report/start_hour}"></input>
+											<input maxlength="2" size="2" id="start_hour" name="start_hour" type="text" value="07"></input>
 										</div>
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12" style="text-align:center;">
 											:
 										</div>
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12" >
-											<input maxlength="2" size="2" id="start_minute" name="start_minute" type="text" placeholder = "00" value="{report/start_minute}"></input>
+											<input maxlength="2" size="2" id="start_minute" name="start_minute" type="text"  value="00"></input>
 										</div>
 
 										<div class="pure-u-lg-5-5 pure-u-md-1-1 pure-u-sm-1-1">
@@ -210,13 +241,13 @@
 										</div>
 
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12" >
-											<input maxlength="2" size="2" class="pure-input" id="end_hour" name="end_hour" type="text" placeholder = "00" value="{report/end_hour}"></input>
+											<input maxlength="2" size="2" class="pure-input" id="end_hour" name="end_hour" type="text"  value="23"></input>
 										</div>
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12" style="text-align:center;">
 											:
 										</div>
 										<div class="pure-u-lg-1-24 pure-u-md-1-12 pure-u-sm-1-12" >
-											<input maxlength="2" size="2" class="pure-input" id="end_minute" name="end_minute" type="text" placeholder = "00" value="{report/end_minute}"></input>
+											<input maxlength="2" size="2" class="pure-input" id="end_minute" name="end_minute" type="text"  value="00"></input>
 										</div>
 									</div>
 
@@ -307,7 +338,7 @@
 
 						</div>
 
-				
+
 					</div>
 
 				</fieldset>

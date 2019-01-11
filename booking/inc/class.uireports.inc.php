@@ -58,11 +58,23 @@
 			if ($_SERVER['REQUEST_METHOD'] == 'POST')
 			{
 				array_set_default($_POST, 'resources', array());
-				$activity_id = phpgw::get_var('activity_id', 'int');
+				$activity_ids = phpgw::get_var('activity_id', 'int');
 				$soactivity = createObject('booking.soactivity');
-				$children = $soactivity->get_children($activity_id);
-				$activity_ids = array_merge(array($activity_id), $children);
-				$report['activity_ids'] = $activity_ids;
+
+
+				$_activity_ids = array();
+				foreach ($activity_ids as $activity_id)
+				{
+					$_activity_ids[] = $activity_id;
+					$test_ids[] = $activity_id;
+			//	$children = $soactivity->get_children($activity_id);
+					//$_activity_ids = array_merge($_activity_ids, $soactivity->get_children($activity_id));
+
+				}
+
+				$report['activity_ids'] = $_activity_ids;
+
+				$report['test_ids'] = $test_ids;
 
 				$report['active'] = '1';
 				$report['building_id'] = phpgw::get_var('building_id', 'int');
@@ -363,10 +375,18 @@
 		public function get_participants_per_agegroupe( $data )
 		{
 
+
+
 			$output_type = 'XHTML';//'XLS';
 			$db = & $GLOBALS['phpgw']->db;
 
 			$resources = array();
+			$resources[] = 0;
+
+
+			foreach ($data['activity_id'] as $v_id)
+			{
+
 			if ($data['all_buildings'])
 			{
 				$sql = "SELECT DISTINCT bb_building_resource.resource_id FROM bb_building"
@@ -374,26 +394,35 @@
 					. " JOIN bb_resource ON bb_building_resource.resource_id = bb_resource.id"
 					. " WHERE bb_building.active = 1"
 					. " AND bb_resource.active = 1"
-					. " AND bb_building.activity_id IN (" . implode(',', $data['activity_ids']) . ')';
+					. " AND bb_building.activity_id = " . $v_id . '';//IN (" . implode(',', $data['activity_ids']) . ')';
 				$db->query($sql);
+
+
 				while ($db->next_record())
 				{
-					$resources[] = $db->f('resource_id');
+							$resources[] = $db->f('resource_id');
 				}
+
 			}
 			else
 			{
 				$resources = $data['resources'];
+
+			}
+
 			}
 
 			$errors = array();
 			$from_ = date($db->date_format(), phpgwapi_datetime::date_to_timestamp($data['start_date']));
 			$to_ = date($db->date_format(), phpgwapi_datetime::date_to_timestamp($data['end_date']));
 
+			//$start_hour_ = date($db->date_format(), phpgwapi_datetime::date_to_timestamp($data['start_hour']));
+
+
 			switch ($data['variable_vertical'])
 			{
 				case 'resource':
-					$jasper_parameters = sprintf("'BK_DATE_FROM|%s;BK_DATE_TO|%s;BK_RESOURCES|%s;BK_WEEKDAYS|%s'", $from_, $to_, implode(",", $resources), implode(',', $data['weekdays']));
+					$jasper_parameters = sprintf("'BK_DATE_FROM|%s;BK_DATE_TO|%s;BK_RESOURCES|%s;BK_WEEKDAYS|%s'",$from_, $to_, implode(",", $resources),implode(',', $data['weekdays']));
 					$report_source = PHPGW_SERVER_ROOT . '/booking/jasper/templates/participants_per_resource.jrxml';
 					break;
 				case 'audience':
@@ -425,10 +454,14 @@
 				}
 			}
 
+
+
 			foreach ($errors as $error)
 			{
 				phpgwapi_cache::message_set($error, 'error');
 			}
+
+
 		}
 
 		/**
